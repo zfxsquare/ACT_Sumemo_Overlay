@@ -1,0 +1,334 @@
+:root {
+    /* Default Theme: ffxiv-dark-theme */
+    /* Derived from _themes.scss */
+    --cmskin-view-border-radius: 0.5rem;
+
+    --cmskin-border-color: #554121;
+    --cmskin-border-shadow: inset 0 1px 1px 0 #cfc36e, inset 0 0 1px 0 hsla(53, 50%, 62%, .5), 0 0 1px 2px rgba(0, 0, 0, .5), 0 2px 2px 2px rgba(0, 0, 0, .5);
+    --cmskin-border-inner: inset 0 0 0 1px hsla(0, 0%, 100%, .1), 0 0 0 2px #222, 0 3px 1px #cfc36e, 0 0 2px 1px rgba(0, 0, 0, .4);
+    
+    --cmskin-inner-header-color: rgba(255, 255, 255, 0.8);
+    --cmskin-inner-bg-color: #1e1e1e;
+    --cmskin-inner-bg-highlight: #3a3a3a;
+
+    --cmskin-main-font-color: #ddd;
+    --cmskin-main-font-highlight: #eee1c5;
+
+    --cmskin-high-font-color: #ffdf30;
+    --cmskin-low-font-color: #ee80ed;
+
+    --cmskin-button-highlight: #494a49;
+    --cmskin-button-color: #2a2c2a;
+    --cmskin-button-hover-highlight: #5b5c5b;
+    --cmskin-button-hover-color: #3f413f;
+    --cmskin-button-active-highlight: #414241;
+    --cmskin-button-active-color: #252725;
+    --cmskin-button-round-radius: 2rem;
+    --cmskin-button-border-top: 1px solid rgba(255, 255, 255, 0.5);
+    --cmskin-button-border-bottom: none;
+
+    --cmskin-input-bg-color: rgba(255, 255, 255, 0.13); /* #fff2 */
+    --cmskin-input-round-radius: 5px;
+
+    --cmskin-dropdown-bg-color: #282828;
+    --cmskin-dropdown-hover-color: rgb(25, 25, 25);
+    --cmskin-dropdown-selected-color: rgb(101, 85, 63);
+    --cmskin-dropdown-round-radius: 4px;
+
+    --cmskin-generic-grey: #777;
+
+    /* Semantic Mappings */
+    --bg-color: var(--cmskin-inner-bg-color);
+    --text-color: var(--cmskin-main-font-color);
+    --text-muted: var(--cmskin-generic-grey);
+    --header-color: var(--cmskin-inner-header-color);
+
+    --border-radius: var(--cmskin-view-border-radius);
+    --font-family: "Microsoft YaHei", "Varela Round", sans-serif;
+
+    /* Status Colors (Custom for this specific overlay logic, keeping generic distinct colors for clarity) */
+    --status-cleared-bg: #4a7c6a; /* Distinct green */
+    --status-cleared-text: #fff;
+    --status-not-cleared-bg: #8c4c4c; /* Distinct red */
+    --status-not-cleared-text: #fff;
+    --status-unknown-bg: #444;
+    --status-unknown-text: #aaa;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    font-family: var(--font-family);
+    color: var(--text-color);
+    overflow: hidden;
+    font-size: 14px;
+}
+
+#overlay-container {
+    background-color: var(--bg-color);
+    border-radius: var(--border-radius);
+    padding: 12px 16px;
+    width: 320px;
+    
+    /* Theme Border Style */
+    box-shadow: var(--cmskin-border-shadow);
+    border: 1px solid var(--cmskin-border-color); /* Simplified from SCSS border-color usually being intricate */
+    /* Note: _themes.scss defines border-color and border-shadow complexly. 
+       We try to approximate or use directly. */
+}
+
+/* Inner border simulation if needed, but box-shadow handles most */
+#overlay-container::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: var(--border-radius);
+    box-shadow: var(--cmskin-border-inner);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 2;
+}
+
+.title {
+    font-weight: bold;
+    color: var(--header-color);
+    font-size: 1.1em;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+#status-text {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    /* background-color: rgba(0, 0, 0, 0.2); */
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.config-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+    font-size: 0.85em;
+    color: var(--text-color);
+    position: relative;
+    z-index: 2;
+}
+
+.config-row label {
+    margin-right: 8px;
+    font-weight: bold;
+    color: var(--cmskin-main-font-highlight);
+}
+
+.config-row input {
+    background: var(--cmskin-input-bg-color);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: var(--cmskin-input-round-radius);
+    padding: 4px 8px;
+    width: 60px;
+    color: var(--text-color);
+    outline: none;
+    margin-right: 8px;
+}
+
+/* Custom Dropdown Styles */
+.custom-select {
+    position: relative;
+    display: inline-block;
+    width: 100px;
+    font-size: 13px;
+    color: var(--text-color);
+}
+
+.select-trigger {
+    background: var(--cmskin-input-bg-color);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: var(--cmskin-input-round-radius);
+    padding: 4px 8px;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+.select-trigger:after {
+    content: '▼';
+    font-size: 10px;
+    position: absolute;
+    right: 8px;
+    top: 6px;
+    color: var(--text-muted);
+}
+
+.select-options {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: var(--cmskin-dropdown-bg-color);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--cmskin-dropdown-round-radius);
+    margin-top: 2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    overflow: hidden;
+}
+
+.select-options.show {
+    display: block;
+}
+
+.option {
+    padding: 6px 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: var(--text-color);
+}
+
+.option:hover {
+    background: var(--cmskin-dropdown-hover-color);
+}
+
+.refresh-btn {
+    background: linear-gradient(to bottom, var(--cmskin-button-highlight), var(--cmskin-button-color));
+    border: none;
+    border-top: var(--cmskin-button-border-top);
+    border-bottom: var(--cmskin-button-border-bottom);
+    border-radius: var(--cmskin-button-round-radius);
+    padding: 5px 12px;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    margin-left: auto;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.refresh-btn:hover {
+    background: linear-gradient(to bottom, var(--cmskin-button-hover-highlight), var(--cmskin-button-hover-color));
+    color: var(--cmskin-main-font-highlight);
+}
+
+.refresh-btn:active {
+    background: linear-gradient(to bottom, var(--cmskin-button-active-highlight), var(--cmskin-button-active-color));
+    transform: translateY(1px);
+}
+
+#party-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.member-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.member-row:last-child {
+    margin-bottom: 0;
+}
+
+.member-row:hover {
+    background-color: var(--cmskin-inner-bg-highlight);
+    border-color: rgba(255,255,255,0.1);
+}
+
+.job-icon {
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    text-align: center;
+    font-size: 0.75em;
+    font-weight: bold;
+    margin-right: 10px;
+    color: #fff;
+    background-color: #444; 
+    /* Ideally job icon color depends on role, but #444 is neutral fallback */
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 1px black;
+}
+
+.info-col {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.95em;
+    font-weight: 500;
+    color: var(--cmskin-main-font-highlight);
+}
+
+.sub-info {
+    font-size: 0.75em;
+    color: var(--text-muted);
+}
+
+.status-container {
+    display: flex;
+    align-items: center;
+}
+
+.status {
+    min-width: 45px;
+    text-align: center;
+    font-size: 0.8em;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: bold;
+    margin-left: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.status.cleared {
+    background-color: var(--status-cleared-bg);
+    color: var(--status-cleared-text);
+}
+
+.status.not-cleared {
+    background-color: var(--status-not-cleared-bg);
+    color: var(--status-not-cleared-text);
+}
+
+.status.unknown,
+.status.error {
+    background-color: var(--status-unknown-bg);
+    color: var(--status-unknown-text);
+}
+
+/* Resize handle for ACT OverlayPlugin */
+html.resize-handle {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none"><circle cx="90" cy="90" r="8" fill="%23FFFFFF"/></svg>');
+    background-position: bottom -5px right -5px;
+    background-repeat: no-repeat;
+    background-size: 20px 20px;
+}
