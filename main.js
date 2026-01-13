@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://sumemo.dev";
 
 // ============ 模拟数据用于测试 (设置 MOCK_MODE = true 启用) ============
 const MOCK_MODE = false; // 设置为 true 启用模拟数据进行调试
