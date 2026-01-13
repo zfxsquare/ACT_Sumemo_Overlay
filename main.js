@@ -47,26 +47,26 @@ let currentZoneId = "1321"; // 默认值
 let isInCombat = false; // 战斗状态
 let partyCount = 0; // 小队人数
 
-// 根据条件显示/隐藏悬浮窗
-function updateOverlayVisibility() {
-    // 战斗中或小队人数<=1时隐藏
-    if (isInCombat || partyCount <= 1) {
-        overlayContainer.style.display = "none";
-    } else {
-        overlayContainer.style.display = "block";
-    }
-}
+// 根据条件显示/隐藏悬浮窗 (已禁用)
+// function updateOverlayVisibility() {
+//     // 战斗中或小队人数<=1时隐藏
+//     if (isInCombat || partyCount <= 1) {
+//         overlayContainer.style.display = "none";
+//     } else {
+//         overlayContainer.style.display = "block";
+//     }
+// }
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("Overlay loaded.");
     statusElement.innerText = "等待 ACT 连接...";
 
-    // 监听战斗状态变化
-    addOverlayListener("onInCombatChangedEvent", (data) => {
-        console.log("[DEBUG] Combat state changed:", data);
-        isInCombat = data.inACTCombat || data.inGameCombat;
-        updateOverlayVisibility();
-    });
+    // 监听战斗状态变化 (自动隐藏已禁用)
+    // addOverlayListener("onInCombatChangedEvent", (data) => {
+    //     console.log("[DEBUG] Combat state changed:", data);
+    //     isInCombat = data.inACTCombat || data.inGameCombat;
+    //     updateOverlayVisibility();
+    // });
 
     // 监听小队变化
     addOverlayListener("PartyChanged", (data) => {
@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 refreshPartyStatus();
             }
 
-            updateOverlayVisibility();
+            // updateOverlayVisibility(); // 自动隐藏已禁用
         }
     });
 
@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
             currentParty = MOCK_PARTY;
             renderPartyList(currentParty);
             refreshPartyStatus();
-            updateOverlayVisibility();
+            // updateOverlayVisibility(); // 自动隐藏已禁用
             return;
         }
 
@@ -149,14 +149,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 currentParty = data.party;
                 renderPartyList(currentParty);
                 refreshPartyStatus();
-                updateOverlayVisibility();
+                // updateOverlayVisibility(); // 自动隐藏已禁用
             } else {
                 statusElement.innerText = "未检测到小队";
                 console.log("[DEBUG] getParty returned empty list.");
                 partyCount = 0;
                 currentParty = [];
                 renderPartyList([]);
-                updateOverlayVisibility();
+                // updateOverlayVisibility(); // 自动隐藏已禁用
             }
         }).catch(err => {
             console.error("[DEBUG] Error calling getParty:", err);
@@ -164,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
             partyCount = 0;
             currentParty = [];
             renderPartyList([]);
-            updateOverlayVisibility();
+            // updateOverlayVisibility(); // 自动隐藏已禁用
         });
     });
 

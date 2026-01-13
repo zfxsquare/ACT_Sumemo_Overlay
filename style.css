@@ -82,7 +82,7 @@ body {
     padding: 5px; /* 边框宽度 */
     width: 330px;
     position: relative;
-    overflow: hidden; /* 确保内层圆角正确裁剪 */
+    /* overflow: visible 允许下拉框显示在容器外 */
 
     /* 外层阴影效果 */
     box-shadow: var(--cmskin-border-shadow);
@@ -130,7 +130,8 @@ body {
 .config-row {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    gap: 8px;
     margin-bottom: 10px;
     font-size: 0.85em;
     color: var(--text-color);
@@ -139,9 +140,9 @@ body {
 }
 
 .config-row label {
-    margin-right: 8px;
     font-weight: bold;
     color: var(--cmskin-main-font-highlight);
+    flex-shrink: 0;
 }
 
 /* Custom Dropdown Styles */
@@ -149,11 +150,10 @@ body {
     position: relative;
     display: inline-block;
     flex: 1;
-    min-width: 180px;
+    min-width: 150px;
     font-size: 13px;
     color: var(--text-color);
     z-index: 10; /* 确保下拉菜单容器有层叠上下文 */
-    margin-right: 8px;
 }
 
 .select-trigger {
@@ -185,8 +185,8 @@ body {
     position: absolute;
     top: 100%;
     left: 0;
+    right: 0; /* 与触发框右边对齐 */
     min-width: 100%;
-    width: max-content;
     background: var(--cmskin-dropdown-bg-color);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: var(--cmskin-dropdown-round-radius);
