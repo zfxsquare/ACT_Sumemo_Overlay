@@ -5,43 +5,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Party Progress Overlay</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="overlay_plugin_api.js" defer></script>
-    <script src="main.js" defer></script>
+    <link rel="stylesheet" href="style.css?v=9">
+    <script src="overlay_plugin_api.js?v=2" defer></script>
+    <script src="main.js?v=9" defer></script>
 </head>
 
 <body>
     <div id="overlay-container">
-        <div class="header">
-            <span class="title">小队副本进度</span>
-            <span id="status-text">等待数据...</span>
-        </div>
-        <div class="config-row">
-            <label for="zone-id-input">Zone ID:</label>
-            <input type="text" id="zone-id-input" value="1321" placeholder="ID">
-
-            <div class="custom-select" id="zone-quick-select-container">
-                <div class="select-trigger" id="select-trigger">快速选择</div>
-                <div class="select-options" id="select-options">
-                    <div class="option" data-value="1321">M9S (1321)</div>
-                    <div class="option" data-value="1323">M10S (1323)</div>
-                    <div class="option" data-value="1325">M11S (1325)</div>
-                    <div class="option" data-value="1327">M12S (1327)</div>
-                </div>
+        <div class="overlay-inner">
+            <div class="header">
+                <span class="title">小队副本进度</span>
+                <span id="status-text">等待数据...</span>
             </div>
-
-            <button id="refresh-btn" class="refresh-btn">刷新</button>
+            <div class="config-row">
+                <label>副本:</label>
+                <div class="custom-select" id="zone-quick-select-container">
+                    <div class="select-trigger" id="select-trigger">选择副本...</div>
+                    <div class="select-options" id="select-options">
+                        <div class="option" data-value="1321">阿卡狄亚登天零式斗技场 重量级1</div>
+                        <div class="option" data-value="1323">阿卡狄亚登天零式斗技场 重量级2</div>
+                        <div class="option" data-value="1327">阿卡狄亚登天零式斗技场 重量级3</div>
+                        <div class="option" data-value="1325">阿卡狄亚登天零式斗技场 重量级4</div>
+                    </div>
+                </div>
+                <button id="refresh-btn" class="refresh-btn">刷新</button>
+            </div>
+            <ul id="party-list">
+                <!-- Party members will be injected here -->
+            </ul>
         </div>
-        <ul id="party-list">
-            <!-- Party members will be injected here -->
-            <!-- 
-            <li class="member-row">
-                <span class="job-icon">WAR</span>
-                <span class="name">Player Name</span>
-                <span class="status cleared">已过本</span>
-            </li> 
-            -->
-        </ul>
     </div>
 </body>
 
