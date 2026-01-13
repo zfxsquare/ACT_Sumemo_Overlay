@@ -1,24 +1,89 @@
 const API_BASE = "http://localhost:3000";
+
+// ============ 模拟数据用于测试 (设置 MOCK_MODE = true 启用) ============
+const MOCK_MODE = false; // 设置为 true 启用模拟数据进行调试
+
+const MOCK_PARTY = [
+    { name: "测试玩家一", job: 19, inParty: true, contentId: "1001", worldId: 1042 },
+    { name: "测试玩家二", job: 24, inParty: true, contentId: "1002", worldId: 1042 },
+    { name: "测试玩家三", job: 20, inParty: true, contentId: "1003", worldId: 1076 },
+    { name: "测试玩家四", job: 23, inParty: true, contentId: "1004", worldId: 1043 },
+    { name: "测试玩家五", job: 25, inParty: true, contentId: "1005", worldId: 1180 },
+    { name: "测试玩家六", job: 28, inParty: true, contentId: "1006", worldId: 1042 },
+    { name: "测试玩家七", job: 22, inParty: true, contentId: "1007", worldId: 1042 },
+    { name: "测试玩家八", job: 31, inParty: true, contentId: "1008", worldId: 1042 },
+];
+
+const MOCK_PROGRESS_DATA = {
+    "1001": { clear: true, updated_at: Date.now() - 3600000 },
+    "1002": { clear: false, progress: { enemy_hp: 0.45, enemy_id: 123 }, updated_at: Date.now() - 7200000 },
+    "1003": { clear: false, progress: { enemy_hp: 0.12, enemy_id: 123 }, updated_at: Date.now() - 86400000 },
+    "1004": { cleared: true, fight: { start_time: Date.now() - 172800000 } },
+    "1005": { clear: false, progress: { enemy_hp: 0, enemy_id: 0 } },
+    "1006": { error: true },
+    "1007": { clear: false, progress: 7500, updated_at: Date.now() - 300000 },
+    "1008": { desc: "无记录" },
+};
+
+function getMockProgress(contentId) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(MOCK_PROGRESS_DATA[contentId] || { desc: "无记录" });
+        }, 200);
+    });
+}
+// ============ 模拟数据结束 ============
+
 const statusElement = document.getElementById("status-text");
 const partyListElement = document.getElementById("party-list");
-const zoneIdInput = document.getElementById("zone-id-input");
+const overlayContainer = document.getElementById("overlay-container");
 
 // Custom Dropdown Elements
 const selectTrigger = document.getElementById("select-trigger");
 const selectOptions = document.getElementById("select-options");
 const options = document.querySelectorAll(".option");
 
-let currentZoneId = zoneIdInput.value;
+let currentZoneId = "1321"; // 默认值
+let isInCombat = false; // 战斗状态
+let partyCount = 0; // 小队人数
+
+// 根据条件显示/隐藏悬浮窗
+function updateOverlayVisibility() {
+    // 战斗中或小队人数<=1时隐藏
+    if (isInCombat || partyCount <= 1) {
+        overlayContainer.style.display = "none";
+    } else {
+        overlayContainer.style.display = "block";
+    }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("Overlay loaded.");
     statusElement.innerText = "等待 ACT 连接...";
 
-    // 监听 Zone ID 输入变化
-    zoneIdInput.addEventListener("change", (e) => {
-        currentZoneId = e.target.value;
-        if (currentParty.length > 0) {
-            refreshPartyStatus(); // 重新查询
+    // 监听战斗状态变化
+    addOverlayListener("onInCombatChangedEvent", (data) => {
+        console.log("[DEBUG] Combat state changed:", data);
+        isInCombat = data.inACTCombat || data.inGameCombat;
+        updateOverlayVisibility();
+    });
+
+    // 监听小队变化
+    addOverlayListener("PartyChanged", (data) => {
+        console.log("[DEBUG] Party changed:", data);
+        if (data && data.party) {
+            partyCount = data.party.filter(m => m.inParty).length;
+            console.log("[DEBUG] Party count:", partyCount);
+
+            // 更新小队列表
+            if (partyCount > 1) {
+                currentParty = data.party;
+                renderPartyList(currentParty);
+                statusElement.innerText = `小队 ${partyCount} 人`;
+                refreshPartyStatus();
+            }
+
+            updateOverlayVisibility();
         }
     });
 
@@ -34,12 +99,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const val = e.target.getAttribute("data-value");
             const text = e.target.innerText;
 
-            // Update input
-            zoneIdInput.value = val;
+            // Update current zone
             currentZoneId = val;
 
-            // Update trigger text (optional, or keep "快速选择")
-            // selectTrigger.innerText = text.split(' ')[0]; // E.g., "M9S"
+            // Update trigger text to show selected option
+            selectTrigger.innerText = text;
 
             // Hide dropdown
             selectOptions.classList.remove("show");
@@ -63,21 +127,44 @@ document.addEventListener("DOMContentLoaded", () => {
         statusElement.innerText = "正在获取小队...";
         console.log("[DEBUG] Manual refresh triggered.");
 
+        // 模拟模式：使用模拟数据
+        if (typeof MOCK_MODE !== 'undefined' && MOCK_MODE) {
+            console.log("[DEBUG] Using MOCK data.");
+            partyCount = MOCK_PARTY.filter(m => m.inParty).length;
+            statusElement.innerText = `小队 ${partyCount} 人 (模拟)`;
+            currentParty = MOCK_PARTY;
+            renderPartyList(currentParty);
+            refreshPartyStatus();
+            updateOverlayVisibility();
+            return;
+        }
+
         callOverlayHandler({ call: "getParty" }).then(data => {
             console.log("[DEBUG] Manual getParty result:", data);
 
-            if (data.party && data.party.length > 0) {
-                statusElement.innerText = `获取到 ${data.party.length} 个队员`;
+            if (data && data.party && data.party.length > 0) {
+                partyCount = data.party.filter(m => m.inParty).length;
+                statusElement.innerText = `小队 ${partyCount} 人`;
                 // 直接使用获取到的数据渲染
                 currentParty = data.party;
                 renderPartyList(currentParty);
                 refreshPartyStatus();
+                updateOverlayVisibility();
             } else {
                 statusElement.innerText = "未检测到小队";
                 console.log("[DEBUG] getParty returned empty list.");
+                partyCount = 0;
                 currentParty = [];
                 renderPartyList([]);
+                updateOverlayVisibility();
             }
+        }).catch(err => {
+            console.error("[DEBUG] Error calling getParty:", err);
+            statusElement.innerText = "获取小队失败";
+            partyCount = 0;
+            currentParty = [];
+            renderPartyList([]);
+            updateOverlayVisibility();
         });
     });
 
@@ -93,6 +180,19 @@ async function refreshPartyStatus() {
     // 使用串行请求防止并发过高导致的数据混乱或 API 限制
     for (const member of currentParty) {
         if (!member.inParty) continue;
+
+        // 模拟模式：使用模拟数据
+        if (typeof MOCK_MODE !== 'undefined' && MOCK_MODE) {
+            try {
+                const progress = await getMockProgress(member.contentId);
+                console.log(`[DEBUG] Mock result for ${member.name}:`, JSON.stringify(progress));
+                updateMemberStatus(member.contentId, progress);
+            } catch (e) {
+                console.error(`[DEBUG] Error fetching mock ${member.name}:`, e);
+                updateMemberStatus(member.contentId, { error: true });
+            }
+            continue;
+        }
 
         let server = member.WorldName || member.worldName;
         const rawWorldId = member.worldId;
@@ -190,16 +290,108 @@ function formatTimeAgo(timestamp) {
     return `${Math.floor(diff / day)} 天前`;
 }
 
+// 完整职业ID到缩写的映射
 const JOB_NAMES = {
-    19: "PLD", 21: "WAR", 32: "DRK", 37: "GNB",
-    24: "WHM", 28: "SCH", 33: "AST", 40: "SGE",
-    20: "MNK", 22: "DRG", 30: "NIN", 34: "SAM", 39: "RPR",
-    23: "BRD", 31: "MCH", 38: "DNC",
-    25: "BLM", 27: "SMN", 35: "RDM",
+    0: "ADV",   // 冒险者
+    // 基础职业
+    1: "GLA", 2: "PGL", 3: "MRD", 4: "LNC", 5: "ARC",
+    6: "CNJ", 7: "THM", 26: "ACN", 29: "ROG",
+    // 生产职业
+    8: "CRP", 9: "BSM", 10: "ARM", 11: "GSM",
+    12: "LTW", 13: "WVR", 14: "ALC", 15: "CUL",
+    // 采集职业
+    16: "MIN", 17: "BTN", 18: "FSH",
+    // 战斗职业
+    19: "PLD", 20: "MNK", 21: "WAR", 22: "DRG", 23: "BRD",
+    24: "WHM", 25: "BLM", 27: "SMN", 28: "SCH", 30: "NIN",
+    31: "MCH", 32: "DRK", 33: "AST", 34: "SAM", 35: "RDM",
+    36: "BLU", 37: "GNB", 38: "DNC", 39: "RPR", 40: "SGE",
+    41: "VPR", 42: "PCT",
 };
+
+// 职业图标URL映射 (根据缩写)
+const JOB_ICONS = {
+    // 职能图标 (后备用)
+    'ROLE_TANK': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/bordered_tank.png',
+    'ROLE_HEALER': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/bordered_healer.png',
+    'ROLE_MELEE': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/bordered_dps.png',
+    'ROLE_RANGED': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/bordered_dps_ranged.png',
+    'ROLE_MAGIC': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/bordered_dps_magic.png',
+    'ROLE_CRAFTER': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob0.png',
+    'ROLE_GATHERER': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob8.png',
+
+    // 基础职业
+    'GLA': 'https://xivpf.ff14.xin/pic/062101_hr1.png',
+    'MRD': 'https://xivpf.ff14.xin/pic/062102_hr1.png',
+    'PGL': 'https://xivpf.ff14.xin/pic/062103_hr1.png',
+    'LNC': 'https://xivpf.ff14.xin/pic/062104_hr1.png',
+    'ROG': 'https://xivpf.ff14.xin/pic/062129_hr1.png',
+    'ARC': 'https://xivpf.ff14.xin/pic/062105_hr1.png',
+    'THM': 'https://xivpf.ff14.xin/pic/062107_hr1.png',
+    'ACN': 'https://xivpf.ff14.xin/pic/062126_hr1.png',
+    'CNJ': 'https://xivpf.ff14.xin/pic/062106_hr1.png',
+
+    // 坦克
+    'PLD': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob0.png',
+    'WAR': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob1.png',
+    'DRK': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob2.png',
+    'GNB': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob3.png',
+
+    // 治疗
+    'WHM': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob4.png',
+    'SCH': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob6.png',
+    'AST': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob5.png',
+    'SGE': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob7.png',
+
+    // 近战DPS
+    'MNK': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob8.png',
+    'DRG': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob9.png',
+    'NIN': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob10.png',
+    'SAM': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob11.png',
+    'RPR': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob12.png',
+    'VPR': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/DoW/VPR.png',
+
+    // 远程物理DPS
+    'BRD': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob13.png',
+    'MCH': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob14.png',
+    'DNC': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob15.png',
+
+    // 远程魔法DPS
+    'BLM': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob16.png',
+    'SMN': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob17.png',
+    'RDM': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob18.png',
+    'BLU': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/zjob19.png',
+    'PCT': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/DoM/PCT.png',
+
+    // 生产职业
+    'CRP': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob0.png',
+    'BSM': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob1.png',
+    'ARM': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob2.png',
+    'GSM': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob3.png',
+    'LTW': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob4.png',
+    'WVR': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob5.png',
+    'ALC': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob6.png',
+    'CUL': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob7.png',
+
+    // 采集职业
+    'MIN': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob8.png',
+    'BTN': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob9.png',
+    'FSH': 'https://static.web.sdo.com/jijiamobile/pic/ff14/ffstones/job/sjob10.png',
+};
+
+// 默认图标 (未知职业)
+const DEFAULT_JOB_ICON = 'https://fu5.web.sdo.com/10036/202406/17193719548325.png';
 
 function getJobName(jobId) {
     return JOB_NAMES[jobId] || "???";
+}
+
+function getJobIcon(jobId) {
+    const abbr = JOB_NAMES[jobId];
+    if (abbr && JOB_ICONS[abbr]) {
+        return JOB_ICONS[abbr];
+    }
+    return DEFAULT_JOB_ICON;
 }
 
 function renderPartyList(party) {
@@ -213,12 +405,13 @@ function renderPartyList(party) {
         li.id = `member-${member.contentId}`;
 
         const jobName = getJobName(member.job);
+        const jobIconUrl = getJobIcon(member.job);
 
         // 初始状态
         let statusHtml = `<span class="status unknown">...</span>`;
 
         li.innerHTML = `
-            <span class="job-icon">${jobName}</span>
+            <img class="job-icon" src="${jobIconUrl}" alt="${jobName}" title="${jobName}">
             <div class="info-col">
                 <span class="name">${member.name}</span>
                 <span class="sub-info"></span> 

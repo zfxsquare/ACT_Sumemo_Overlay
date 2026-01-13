@@ -1,11 +1,21 @@
 :root {
-    /* Default Theme: ffxiv-dark-theme */
-    /* Derived from _themes.scss */
-    --cmskin-view-border-radius: 0.5rem;
+    /* Default Theme: ffxiv-dark-theme (CMSkin Style) */
+    --cmskin-view-border-radius: 8px;
+    --cmskin-inner-border-radius: 4px;
 
-    --cmskin-border-color: #554121;
-    --cmskin-border-shadow: inset 0 1px 1px 0 #cfc36e, inset 0 0 1px 0 hsla(53, 50%, 62%, .5), 0 0 1px 2px rgba(0, 0, 0, .5), 0 2px 2px 2px rgba(0, 0, 0, .5);
-    --cmskin-border-inner: inset 0 0 0 1px hsla(0, 0%, 100%, .1), 0 0 0 2px #222, 0 3px 1px #cfc36e, 0 0 2px 1px rgba(0, 0, 0, .4);
+    /* 外层边框阴影 - 金色内发光 + 黑色外阴影 */
+    --cmskin-border-shadow:
+        inset 0 1px 1px 0 rgb(207, 195, 110),
+        inset 0 0 1px 0 rgba(207, 195, 110, 0.5),
+        0 0 1px 2px rgba(0, 0, 0, 0.5),
+        0 2px 2px 2px rgba(0, 0, 0, 0.5);
+
+    /* 内层边框阴影 - 白色内边 + 深色中边 + 金色底线 */
+    --cmskin-border-inner:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+        0 0 0 2px rgb(34, 34, 34),
+        0 3px 1px 0 rgb(207, 195, 110),
+        0 0 2px 1px rgba(0, 0, 0, 0.4);
     
     --cmskin-inner-header-color: rgba(255, 255, 255, 0.8);
     --cmskin-inner-bg-color: #1e1e1e;
@@ -65,29 +75,29 @@ body {
     font-size: 14px;
 }
 
+/* 外层容器 - 金色边框 */
 #overlay-container {
-    background-color: var(--bg-color);
-    border-radius: var(--border-radius);
-    padding: 12px 16px;
-    width: 320px;
-    
-    /* Theme Border Style */
+    background-color: rgb(85, 65, 33); /* 暗金色边框背景 */
+    border-radius: var(--cmskin-view-border-radius);
+    padding: 5px; /* 边框宽度 */
+    width: 330px;
+    position: relative;
+    overflow: hidden; /* 确保内层圆角正确裁剪 */
+
+    /* 外层阴影效果 */
     box-shadow: var(--cmskin-border-shadow);
-    border: 1px solid var(--cmskin-border-color); /* Simplified from SCSS border-color usually being intricate */
-    /* Note: _themes.scss defines border-color and border-shadow complexly. 
-       We try to approximate or use directly. */
 }
 
-/* Inner border simulation if needed, but box-shadow handles most */
-#overlay-container::after {
-    content: "";
-    display: block;
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: var(--border-radius);
+/* 内层容器 - 实际内容区域 */
+.overlay-inner {
+    background: linear-gradient(rgb(58, 58, 58), rgb(30, 30, 30) 32px);
+    border-radius: var(--cmskin-inner-border-radius);
+    padding: 12px 16px;
+    position: relative;
+    overflow: visible;
+
+    /* 内层阴影效果 */
     box-shadow: var(--cmskin-border-inner);
-    pointer-events: none;
-    z-index: 1;
 }
 
 .header {
@@ -125,7 +135,7 @@ body {
     font-size: 0.85em;
     color: var(--text-color);
     position: relative;
-    z-index: 2;
+    z-index: 10; /* 必须高于 #party-list 的 z-index，否则下拉菜单会被列表遮挡 */
 }
 
 .config-row label {
@@ -134,34 +144,29 @@ body {
     color: var(--cmskin-main-font-highlight);
 }
 
-.config-row input {
-    background: var(--cmskin-input-bg-color);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: var(--cmskin-input-round-radius);
-    padding: 4px 8px;
-    width: 60px;
-    color: var(--text-color);
-    outline: none;
-    margin-right: 8px;
-}
-
 /* Custom Dropdown Styles */
 .custom-select {
     position: relative;
     display: inline-block;
-    width: 100px;
+    flex: 1;
+    min-width: 180px;
     font-size: 13px;
     color: var(--text-color);
+    z-index: 10; /* 确保下拉菜单容器有层叠上下文 */
+    margin-right: 8px;
 }
 
 .select-trigger {
     background: var(--cmskin-input-bg-color);
     border: 1px solid rgba(255,255,255,0.2);
     border-radius: var(--cmskin-input-round-radius);
-    padding: 4px 8px;
+    padding: 4px 24px 4px 8px; /* 右侧留出箭头空间 */
     cursor: pointer;
     user-select: none;
     position: relative;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .select-trigger:after {
@@ -169,8 +174,10 @@ body {
     font-size: 10px;
     position: absolute;
     right: 8px;
-    top: 6px;
+    top: 50%;
+    transform: translateY(-50%);
     color: var(--text-muted);
+    pointer-events: none;
 }
 
 .select-options {
@@ -178,7 +185,8 @@ body {
     position: absolute;
     top: 100%;
     left: 0;
-    width: 100%;
+    min-width: 100%;
+    width: max-content;
     background: var(--cmskin-dropdown-bg-color);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: var(--cmskin-dropdown-round-radius);
@@ -259,17 +267,11 @@ body {
 .job-icon {
     width: 28px;
     height: 28px;
-    line-height: 28px;
-    text-align: center;
-    font-size: 0.75em;
-    font-weight: bold;
     margin-right: 10px;
-    color: #fff;
-    background-color: #444; 
-    /* Ideally job icon color depends on role, but #444 is neutral fallback */
     border-radius: 4px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    text-shadow: 0 1px 1px black;
+    object-fit: contain;
+    background-color: #444; /* 图片加载失败时的后备背景 */
 }
 
 .info-col {
